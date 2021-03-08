@@ -3,9 +3,8 @@
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 
-pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly,
-               shinythemes, shinyjs, DT, leaflet, knitr, Stat2Data, 
-               dplyr, patchwork, ggpubr, htmlwidgets, shinythemes)
+pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,
+               Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis)
 vehicles <- readRDS("vehicles_data.RDS")
 
 introPanel <- tabPanel("Craiglist's Vehicles",
@@ -88,14 +87,9 @@ plotPanel <- tabPanel(
 plotlyPanel <- tabPanel(
   "title",
   useShinyjs(),
-  sidebarLayout(
-    sidebarPanel(
-      
-    ),
-    
-    mainPanel(
-      plotlyOutput("plotly")
-    )
+  splitLayout(
+    plotlyOutput("plotly1"),
+    plotlyOutput("plotly2")
   )
 )
 
@@ -112,6 +106,8 @@ plotlyPanel <- tabPanel(
 #     )
 #   )
 # )
+
+
 
 
 ui <- navbarPage("Roberto J. Alcaraz Molina",
@@ -148,7 +144,7 @@ server <- function(input, output){
   })
   
   
-  output$plotly <- renderPlotly({
+  output$plotly1 <- renderPlotly({
     usa_points = vehicles[(vehicles$long < -55 & vehicles$long > -130 & vehicles$lat > 25 & vehicles$lat < 50), c("state", "long", "lat")]
     usa_points = na.omit(usa_points)
     
@@ -159,6 +155,14 @@ server <- function(input, output){
       geom_point(data = usa_points, aes(x = long, y = lat, color = state)) + theme_bw() +
       theme(legend.position = "none") + xlab(" ") + ylab(" ")
     
+    points
+  })
+  
+  output$plotly2 <- renderPlotly({
+    usa_points <- vehicles[(vehicles$long < -55 & vehicles$long > -130 & vehicles$lat > 25 & vehicles$lat < 50), c("state", "long", "lat")]
+    usa_points <- na.omit(usa_points)
+    
+    USA = map_data("usa")
     data = usa_points %>%
       group_by(state) %>%
       summarise(count = n(), mean_lat = mean(lat), mean_long = mean(long))
@@ -171,7 +175,7 @@ server <- function(input, output){
       scale_color_viridis() + theme_bw() + xlab(" ") + ylab(" ")
     #theme(legend.position = "none")
     
-    ggarrange(points, quant, widths = c(1,1.25))
+    quant
   })
   
   
