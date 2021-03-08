@@ -44,6 +44,7 @@ introPanel <- tabPanel("Craiglist's Vehicles",
                          )
                        )
 
+plotPanel <- tabPanel("Descriptive analysis")
 
 
 
