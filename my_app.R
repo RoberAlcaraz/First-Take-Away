@@ -4,7 +4,15 @@
 # the 'Run App' button above.
 
 pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,
-               Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis)
+               Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis,
+               devtools, kaggler, caret)
+# devtools::install_git("https://github.com/bernardo-dauria/kaggler.git")
+
+# kgl_auth(username = "robertoalcaraz", key = "c46790c8f0e5c7a98f2b1a281c381a11")
+# kgl_datasets_list(search = "austinreese/craigslist-carstrucks-data")
+# 
+# kgl_datasets_download(owner_dataset = "austinreese/craigslist-carstrucks-data", fileName = 'vehicles.csv', datasetVersionNumber = 7)
+
 vehicles <- readRDS("vehicles_data.RDS")
 
 introPanel <- tabPanel("Craiglist's Vehicles",
@@ -93,6 +101,40 @@ plotlyPanel <- tabPanel(
   )
 )
 
+statsPanel <- tabPanel(
+  "Statistical Models",
+  useShinyjs(),
+  sidebarLayout(
+    sidebarPanel(
+      h3(strong("Statistical classification and Machine Learning")),
+      p(""),
+      br(),
+      h4("Select the partition of the data that goes in the training set: "),
+      sliderInput("data_part", label = NULL, min = 0.5, max = 0.9, step = 0.05, value = 0.7),
+      br(),
+      h4("Select the method of resampling: "),
+      radioButtons("control", label = NULL, choices = c("5-fold cross validation (CV)" = "cv",
+                                                        "5 times bootstrap" = "boot")),
+      h4("Select the model: "),
+      radioButtons("model", label = NULL, choices = c("Generalized Linear Model (glm)" = "glm",
+                                                      "K Nearest Neighbors (knn)" = "knn",
+                                                      "Random Forest (rf)" = "rf",
+                                                      "Boosted Logistic Regression (LogitBoost)" = "LogitBoost",
+                                                      "Neural network (nnet)" = "nnet")),
+      actionButton("do", "Go!")
+    ),
+    
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Summary of the model", verbatimTextOutput("mod")),
+        tabPanel("Confusion Matrix", verbatimTextOutput("confMat")),
+        tabPanel("Variable Importance", plotOutput("varImp"))
+      )
+      )
+    )
+  )
+  
+
 # newPanel <- tabPanel(
 #   "title",
 #   useShinyjs(),
@@ -115,8 +157,33 @@ ui <- navbarPage("Roberto J. Alcaraz Molina",
                  introPanel,
                  dataPanel,
                  plotPanel,
-                 plotlyPanel
+                 plotlyPanel,
+                 statsPanel
 )
+
+# SERVER FUNCTION
+model.fitting <- function(partition, control, model){
+  
+  set.seed(0)
+  training <- createDataPartition(vehicles$price, p = partition, list = F)
+  vehiclesTrain <- vehicles[training, ]
+  vehiclesTest <- vehicles[-training, ]
+  
+  ctrl <- trainControl(method = control,
+                       number = 5, classProbs = T, verboseIter = F)
+  
+  form <- as.formula(price ~ year + odometer + manufacturer + condition + fuel + title_status + transmission + drive)
+  fit.mod <- train(form, 
+                   method = model,
+                   data = vehiclesTrain, metric = "Accuracy",
+                   trControl = ctrl,
+                   preProcess = c("BoxCox", "center", "scale"))
+  
+  pred <- predict(fit.mod, vehiclesTest)
+  CM <- confusionMatrix(pred, vehiclesTest$price)
+  
+  invisible(list(fit = fit.mod, confMatrix = CM))
+}
 
 server <- function(input, output){
   
@@ -178,7 +245,23 @@ server <- function(input, output){
     quant
   })
   
+  fit.mod <- eventReactive(input$do, {
+    model.fitting(input$data_part, input$control, input$model)
+  })
   
+  
+  output$mod <- renderPrint({
+      fit.mod()$fit
+  })
+  
+  output$confMat <- renderPrint(
+    fit.mod()$confMatrix
+  )
+  
+  output$varImp <- renderPlot({
+    plot_imp <- varImp(fit.mod()$fit, scale = T)
+    plot(plot_imp, scales = list(y = list(cex = .95)), top = 5)
+  })
 }
 
 shinyApp(ui = ui, server = server)
