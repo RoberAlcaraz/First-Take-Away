@@ -7,144 +7,154 @@ pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythem
                Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis,
                devtools, kaggler, caret, reticulate, mice)
 
-# py_install("kaggle")
-# kaggle <- import("kaggle")
-# kaggle$api$authenticate()
-# kaggle$api$dataset_download_files("austinreese/craigslist-carstrucks-data", "vehicles.csv", unzip = T)
+# Here, if DOWNLOAD_DATA_SET is TRUE, we download the vehicles data set from 
+# Kaggle. If order to be faster, I have saved the final data set as vehicles_data.RDS,
+# which will be the one to be used if DOWNLOAD_DATA_SET is FALSE.
 
-# DATA PRE-PROCESSING
-# ###############################################################################
-# vehicles = read.csv("vehicles.csv/vehicles.csv")
-# #Firstly, we can observe some variables that are not useful in our study like 
-# # the ID, all that are related with URLs and the descriptions of each car. We 
-# # are going to proceed to eliminate them.
-# 
-# vehicles = vehicles[, -c(1, 2, 3, 4, 5, 16, 20, 21, 22, 26)]
-# # Now, we remove some outliers that appear in the price
-# 
-# q = quantile(vehicles$price, probs = c(0.125, 0.9995))
-# vehicles = vehicles[vehicles$price > q[1] & vehicles$price < q[2],]
-# 
-# # Then, we will use a method called *Predictive Mean Matching* (PMM), which 
-# # estimates a regression of $x_j$ taking as predictors the rest of the 
-# # variables. Therefore, our variables ``year`` and ``odometer`` will look like:
-# 
-# X = mice(vehicles[, c("price", "year", "odometer")], 
-#          method = "pmm", m = 5, printFlag = F)
-# X = complete(X)
-# vehicles[, c("price", "year", "odometer")] = X
-# 
-# # For the variable of the ``manufacturer``, since it has 44 different levels but
-# # we know that it is hugely important, we will modify them as follows: we will 
-# # consider 4 categories (> \$30k, between \$30k and \$20k, between \$20k and
-# # \$10k and < \$10k), which will be named class **A**, **B**, **C** and **D**. 
-# # For the cars that have no manufacturer, we will assign them one category or 
-# # another depending on their price and for the rest, we will calculate the mean 
-# # of each manufacturer and we will divide them in the same categories. 
-# # Therefore, our variable ``manufacturer`` will look like:
-# 
-# v = which(vehicles$manufacturer == "")
-# for (i in v){
-#   vehicles$manufacturer[i] = if (vehicles$price[i] >= 30000){vehicles$manufacturer[i] = "A"}
-#   else if (vehicles$price[i] < 30000 & vehicles$price[i] >= 20000){vehicles$manufacturer[i] = "B"}
-#   else if (vehicles$price[i] < 20000 & vehicles$price[i] >= 10000){vehicles$manufacturer[i] = "C"}
-#   else {vehicles$manufacturer[i] = "D"}
-# }
-# 
-# a = which(vehicles$manufacturer == "A")  
-# b = which(vehicles$manufacturer == "B")  
-# c = which(vehicles$manufacturer == "C")  
-# d = which(vehicles$manufacturer == "D")  
-# 
-# mean_manufacturers = vehicles[-c(a,b,c,d),] %>%
-#   group_by(manufacturer) %>%
-#   summarise_at(vars(price), funs(mean(., na.rm=T)))
-# 
-# A = which(mean_manufacturers$price >= 30000)
-# B = which(mean_manufacturers$price < 30000 & mean_manufacturers$price >= 20000)
-# C = which(mean_manufacturers$price < 20000 & mean_manufacturers$price >= 10000)
-# D = which(mean_manufacturers$price < 10000)
-# 
-# 
-# 
-# for (i in 1:nrow(vehicles)){
-#   if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[A])
-#   {vehicles$manufacturer[i] = "A"}
-#   else if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[B])
-#   {vehicles$manufacturer[i] = "B"} 
-#   else if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[C])
-#   {vehicles$manufacturer[i] = "C"}
-#   else if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[D])
-#   {vehicles$manufacturer[i] = "D"}
-# }
-# 
-# # Also, we edit more variables:
-# 
-# vehicles$manufacturer = as.factor(vehicles$manufacturer)      
-# vehicles$condition = as.factor(vehicles$condition)
-# vehicles$cylinders = as.factor(vehicles$cylinders)
-# vehicles$fuel = as.factor(vehicles$fuel)
-# vehicles$title_status = factor(vehicles$title_status, 
-#                                levels = c("clean", "lien", "missing", "parts only", "rebuilt", "salvage"), 
-#                                labels = c("ok", "ok", "notok", "notok", "ok", "notok"))   
-# vehicles$transmission = as.factor(vehicles$transmission)
-# vehicles$drive = as.factor(vehicles$drive)
-# vehicles$size = as.factor(vehicles$size)  
-# 
-# # Then, for the categorical predictors we will compute the NA's as we have 
-# # explained before for the numerical ones.
-# 
-# cat_predictors = vehicles[, c("condition", "cylinders", "fuel", "title_status", 
-#                               "transmission", "drive", "size")]
-# 
-# cat_predictors$condition[which(cat_predictors$condition == "")] = NA
-# cat_predictors$cylinders[which(cat_predictors$cylinders == "")] = NA
-# cat_predictors$fuel[which(cat_predictors$fuel == "")] = NA
-# cat_predictors$title_status[which(cat_predictors$title_status == "")] = NA
-# cat_predictors$transmission[which(cat_predictors$transmission == "")] = NA
-# cat_predictors$drive[which(cat_predictors$drive == "")] = NA
-# cat_predictors$size[which(cat_predictors$size == "")] = NA
-# 
-# X = mice(cat_predictors, method = "pmm", m = 5, printFlag = F)
-# X = complete(X)
-# 
-# vehicles[, c("condition", "cylinders", "fuel", "title_status", "transmission", "drive", "size")] = X
-# 
-# vehicles$condition = factor(vehicles$condition,
-#                             levels = c("new", "like new", "excellent", "good", "fair", "salvage"))
-# summary(vehicles$condition)
-# vehicles$cylinders = factor(vehicles$cylinders,
-#                             levels = c("12 cylinders", "10 cylinders", "8 cylinders", "6 cylinders", "5 cylinders", "4 cylinders", "3 cylinders", "other"))
-# vehicles$fuel = factor(vehicles$fuel)
-# vehicles$title_status = factor(vehicles$title_status)   
-# vehicles$transmission = factor(vehicles$transmission)
-# vehicles$drive = factor(vehicles$drive)
-# vehicles$size = factor(vehicles$size,
-#                        levels = c("full-size", "mid-size", "compact", "sub-compact"))
-# 
-# # Finally, we modify our target variable in order to do a classification problem.
-# 
-# vehicles$price = ifelse(vehicles$price <= 20000, "Easy", "Diff")
-# 
-# vehicles$price = as.factor(vehicles$price)
-# vehicles$price = factor(vehicles$price, levels = c("Easy", "Diff"))
-# 
-# # Since there are some variables that are not useful to the analysis, we will
-# # remove them.
-# 
-# vehicles = vehicles[, -c(4, 6, 12, 13)]
-# 
-# # And then, we have too many observations, therefore we will take a sample of
-# # 8000 observations
-# 
-# sample = createDataPartition(vehicles$price, p = 0.02, list = F)
-# 
-# vehicles = vehicles[sample, ]
-# saveRDS(vehicles, file = "vehicles_data.RDS")
+DOWNLOAD_DATA_SET <- FALSE
 
-#################################################
-vehicles <- readRDS("vehicles_data.RDS")
+if (DOWNLOAD_DATA_SET){
 
+  py_install("kaggle")
+  kaggle <- import("kaggle")
+  kaggle$api$authenticate()
+  kaggle$api$dataset_download_files("austinreese/craigslist-carstrucks-data", "vehicles.csv", unzip = T)
+  
+  # DATA PRE-PROCESSING
+  ###############################################################################
+  vehicles = read.csv("vehicles.csv/vehicles.csv")
+  #Firstly, we can observe some variables that are not useful in our study like 
+  # the ID, all that are related with URLs and the descriptions of each car. We 
+  # are going to proceed to eliminate them.
+  
+  vehicles = vehicles[, -c(1, 2, 3, 4, 5, 16, 20, 21, 22, 26)]
+  # Now, we remove some outliers that appear in the price
+  
+  q = quantile(vehicles$price, probs = c(0.125, 0.9995))
+  vehicles = vehicles[vehicles$price > q[1] & vehicles$price < q[2],]
+  
+  # Then, we will use a method called *Predictive Mean Matching* (PMM), which 
+  # estimates a regression of $x_j$ taking as predictors the rest of the 
+  # variables. Therefore, our variables ``year`` and ``odometer`` will look like:
+  
+  X = mice(vehicles[, c("price", "year", "odometer")], 
+           method = "pmm", m = 5, printFlag = F)
+  X = complete(X)
+  vehicles[, c("price", "year", "odometer")] = X
+  
+  # For the variable of the ``manufacturer``, since it has 44 different levels but
+  # we know that it is hugely important, we will modify them as follows: we will 
+  # consider 4 categories (> \$30k, between \$30k and \$20k, between \$20k and
+  # \$10k and < \$10k), which will be named class **A**, **B**, **C** and **D**. 
+  # For the cars that have no manufacturer, we will assign them one category or 
+  # another depending on their price and for the rest, we will calculate the mean 
+  # of each manufacturer and we will divide them in the same categories. 
+  # Therefore, our variable ``manufacturer`` will look like:
+  
+  v = which(vehicles$manufacturer == "")
+  for (i in v){
+    vehicles$manufacturer[i] = if (vehicles$price[i] >= 30000){vehicles$manufacturer[i] = "A"}
+    else if (vehicles$price[i] < 30000 & vehicles$price[i] >= 20000){vehicles$manufacturer[i] = "B"}
+    else if (vehicles$price[i] < 20000 & vehicles$price[i] >= 10000){vehicles$manufacturer[i] = "C"}
+    else {vehicles$manufacturer[i] = "D"}
+  }
+  
+  a = which(vehicles$manufacturer == "A")  
+  b = which(vehicles$manufacturer == "B")  
+  c = which(vehicles$manufacturer == "C")  
+  d = which(vehicles$manufacturer == "D")  
+  
+  mean_manufacturers = vehicles[-c(a,b,c,d),] %>%
+    group_by(manufacturer) %>%
+    summarise_at(vars(price), funs(mean(., na.rm=T)))
+  
+  A = which(mean_manufacturers$price >= 30000)
+  B = which(mean_manufacturers$price < 30000 & mean_manufacturers$price >= 20000)
+  C = which(mean_manufacturers$price < 20000 & mean_manufacturers$price >= 10000)
+  D = which(mean_manufacturers$price < 10000)
+  
+  
+  
+  for (i in 1:nrow(vehicles)){
+    if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[A])
+    {vehicles$manufacturer[i] = "A"}
+    else if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[B])
+    {vehicles$manufacturer[i] = "B"} 
+    else if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[C])
+    {vehicles$manufacturer[i] = "C"}
+    else if(vehicles$manufacturer[i] %in% mean_manufacturers$manufacturer[D])
+    {vehicles$manufacturer[i] = "D"}
+  }
+  
+  # Also, we edit more variables:
+  
+  vehicles$manufacturer = as.factor(vehicles$manufacturer)      
+  vehicles$condition = as.factor(vehicles$condition)
+  vehicles$cylinders = as.factor(vehicles$cylinders)
+  vehicles$fuel = as.factor(vehicles$fuel)
+  vehicles$title_status = factor(vehicles$title_status, 
+                                 levels = c("clean", "lien", "missing", "parts only", "rebuilt", "salvage"), 
+                                 labels = c("ok", "ok", "notok", "notok", "ok", "notok"))   
+  vehicles$transmission = as.factor(vehicles$transmission)
+  vehicles$drive = as.factor(vehicles$drive)
+  vehicles$size = as.factor(vehicles$size)  
+  
+  # Then, for the categorical predictors we will compute the NA's as we have 
+  # explained before for the numerical ones.
+  
+  cat_predictors = vehicles[, c("condition", "cylinders", "fuel", "title_status", 
+                                "transmission", "drive", "size")]
+  
+  cat_predictors$condition[which(cat_predictors$condition == "")] = NA
+  cat_predictors$cylinders[which(cat_predictors$cylinders == "")] = NA
+  cat_predictors$fuel[which(cat_predictors$fuel == "")] = NA
+  cat_predictors$title_status[which(cat_predictors$title_status == "")] = NA
+  cat_predictors$transmission[which(cat_predictors$transmission == "")] = NA
+  cat_predictors$drive[which(cat_predictors$drive == "")] = NA
+  cat_predictors$size[which(cat_predictors$size == "")] = NA
+  
+  X = mice(cat_predictors, method = "pmm", m = 5, printFlag = F)
+  X = complete(X)
+  
+  vehicles[, c("condition", "cylinders", "fuel", "title_status", "transmission", "drive", "size")] = X
+  
+  vehicles$condition = factor(vehicles$condition,
+                              levels = c("new", "like new", "excellent", "good", "fair", "salvage"))
+  summary(vehicles$condition)
+  vehicles$cylinders = factor(vehicles$cylinders,
+                              levels = c("12 cylinders", "10 cylinders", "8 cylinders", "6 cylinders", "5 cylinders", "4 cylinders", "3 cylinders", "other"))
+  vehicles$fuel = factor(vehicles$fuel)
+  vehicles$title_status = factor(vehicles$title_status)   
+  vehicles$transmission = factor(vehicles$transmission)
+  vehicles$drive = factor(vehicles$drive)
+  vehicles$size = factor(vehicles$size,
+                         levels = c("full-size", "mid-size", "compact", "sub-compact"))
+  
+  # Finally, we modify our target variable in order to do a classification problem.
+  
+  vehicles$price = ifelse(vehicles$price <= 20000, "Easy", "Diff")
+  
+  vehicles$price = as.factor(vehicles$price)
+  vehicles$price = factor(vehicles$price, levels = c("Easy", "Diff"))
+  
+  # Since there are some variables that are not useful to the analysis, we will
+  # remove them.
+  
+  vehicles = vehicles[, -c(4, 6, 12, 13)]
+  
+  # And then, we have too many observations, therefore we will take a sample of
+  # 8000 observations
+  
+  sample = createDataPartition(vehicles$price, p = 0.02, list = F)
+  
+  vehicles = vehicles[sample, ]
+  # saveRDS(vehicles, file = "vehicles_data.RDS")
+} else {
+  vehicles <- readRDS("vehicles_data.RDS")
+}
+
+# SHINY APP
+###############################################################################
 introPanel <- tabPanel("Craiglist's Vehicles",
                        sidebarLayout(position = "right",
                          sidebarPanel(
