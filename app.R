@@ -1,7 +1,9 @@
+##############################################################################
 # Roberto Jesús Alcaraz Molina
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
+#############################################################################
 
 pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,
                Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis,
@@ -148,12 +150,15 @@ if (DOWNLOAD_DATA_SET){
   sample = createDataPartition(vehicles$price, p = 0.02, list = F)
   
   vehicles = vehicles[sample, ]
-  # saveRDS(vehicles, file = "vehicles_data.RDS")
+  # saveRDS(vehicles, "vehicles_data.RDS")
 } else {
   vehicles <- readRDS("vehicles_data.RDS")
 }
 
 # SHINY APP
+###############################################################################
+
+# UI FUNCTION
 ###############################################################################
 introPanel <- tabPanel("Craiglist's Vehicles",
                        sidebarLayout(position = "right",
@@ -257,7 +262,7 @@ statsPanel <- tabPanel(
         models. First of all, we can select the ", strong("percentage of the data set"), "
         that is employed to train the model. Then, we can choose the method of 
         resampling between ", strong("cross validation"), "or ", strong("boostrap"),
-        ". Finally, we can select between ", strong("five different models"), 
+        ". Finally, we can select between ", strong("four different models"), 
         "taking into account that some of them needs some time to train."),
       p("When you are ready, just press ", strong("Go!")),
       p("Moreover, you can have a report of the results by clicking the",
@@ -273,7 +278,6 @@ statsPanel <- tabPanel(
       radioButtons("model", label = NULL, choices = c("Generalized Linear Model (glm)" = "glm",
                                                       "K Nearest Neighbors (knn)" = "knn",
                                                       "Random Forest (rf)" = "rf",
-                                                      "Boosted Logistic Regression (LogitBoost)" = "LogitBoost",
                                                       "Neural network (nnet)" = "nnet")),
       actionButton("do", "Go!"), downloadButton("report", "Generate report")
     ),
@@ -287,23 +291,6 @@ statsPanel <- tabPanel(
       )
     )
   )
-  
-
-# newPanel <- tabPanel(
-#   "title",
-#   useShinyjs(),
-#   sidebarLayout(
-#     sidebarPanel(
-#       
-#     ),
-#     
-#     mainPanel(
-#       
-#     )
-#   )
-# )
-
-
 
 
 ui <- navbarPage("Roberto J. Alcaraz Molina",
@@ -315,6 +302,8 @@ ui <- navbarPage("Roberto J. Alcaraz Molina",
                  statsPanel
 )
 
+
+###############################################################################
 # SERVER FUNCTION
 model.fitting <- function(partition, control, model){
   
