@@ -233,12 +233,10 @@ plotPanel <- tabPanel(
 )
 
 plotlyPanel <- tabPanel(
-  "title",
+  "Distribution of the vehicles",
   useShinyjs(),
   splitLayout(
     wellPanel(
-      p("On the left, there are all vehicles on sale in the USA and on the right,
-        the quantity of vehicles on sale in each state."),
       p("On the one hand, there is the location of the vehicles in the USA:"),
       plotlyOutput("plotly1"),
     ),
@@ -255,7 +253,15 @@ statsPanel <- tabPanel(
   sidebarLayout(
     sidebarPanel(
       h3(strong("Statistical classification and Machine Learning")),
-      p(""),
+      p("In this panel, we can perform some statistical and machine learning
+        models. First of all, we can select the ", strong("percentage of the data set"), "
+        that is employed to train the model. Then, we can choose the method of 
+        resampling between ", strong("cross validation"), "or ", strong("boostrap"),
+        ". Finally, we can select between ", strong("five different models"), 
+        "taking into account that some of them needs some time to train."),
+      p("When you are ready, just press ", strong("Go!")),
+      p("Moreover, you can have a report of the results by clicking the",
+        strong("Report Button.")),
       br(),
       h4("Select the partition of the data that goes in the training set: "),
       sliderInput("data_part", label = NULL, min = 0.5, max = 0.9, step = 0.05, value = 0.7),
@@ -269,7 +275,7 @@ statsPanel <- tabPanel(
                                                       "Random Forest (rf)" = "rf",
                                                       "Boosted Logistic Regression (LogitBoost)" = "LogitBoost",
                                                       "Neural network (nnet)" = "nnet")),
-      actionButton("do", "Go!")
+      actionButton("do", "Go!"), downloadButton("report", "Generate report")
     ),
     
     mainPanel(
@@ -410,6 +416,34 @@ server <- function(input, output){
     plot_imp <- varImp(fit.mod()$fit, scale = T)
     plot(plot_imp, scales = list(y = list(cex = .95)), top = 5)
   })
+  
+  output$report <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report.Rmd")
+      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(
+        data_part = isolate(input$data_part), 
+        control = isolate(input$control),
+        model = isolate(input$model)
+      )
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, 
+                        output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
 }
 
 shinyApp(ui = ui, server = server)

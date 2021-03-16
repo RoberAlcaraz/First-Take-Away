@@ -1,0 +1,90 @@
+---
+title: "**Machine learning models**"
+subtitle: "**REPORT**"
+author: "Roberto J. Alcaraz Molina"
+output: html_document
+params:
+  data_part: 0.75
+  control: "cv"
+  model: "glm"
+---
+```{r include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, 
+                      echo = F, 
+                      message = FALSE,
+                      fig.pos="H", 
+                      fig.align="center",
+                      fig.width=10,
+                      cache=FALSE, error = F,
+                      class.output = "bg-primary")
+```
+
+```{r}
+pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis, devtools, kaggler, caret, reticulate, mice)
+```
+
+
+```{r, echo=F}
+vehicles <- readRDS("vehicles_data.RDS")
+
+model.fitting <- function(partition, control, model){
+  
+  set.seed(0)
+  training <- createDataPartition(vehicles$price, p = partition, list = F)
+  vehiclesTrain <- vehicles[training, ]
+  vehiclesTest <- vehicles[-training, ]
+  
+  ctrl <- trainControl(method = control,
+                       number = 5, classProbs = T, verboseIter = F)
+  
+  form <- as.formula(price ~ year + odometer + manufacturer + condition + fuel + title_status + transmission + drive)
+  fit.mod <- train(form, 
+                   method = model,
+                   data = vehiclesTrain, metric = "Accuracy",
+                   trControl = ctrl,
+                   preProcess = c("BoxCox", "center", "scale"))
+  
+  pred <- predict(fit.mod, vehiclesTest)
+  CM <- confusionMatrix(pred, vehiclesTest$price)
+  
+  invisible(list(fit = fit.mod, confMatrix = CM))
+}
+```
+
+
+Here, there are your results of the model:
+
+  - First of all, we can select the percentage of the data set that is employed 
+  to train the model. You have selected a `r 100*params$data_part` %.
+  
+  - Then, we can choose the method of resampling between cross validation or boostrap. 
+  You have selected `r params$control`.
+  
+  - Finally, we can select between five different models, taking into account that
+  some of them needs some time to train. You have selected the model `r params$model`.
+  
+## Summary of the model
+
+```{r, echo=F}
+fit.mod <- model.fitting(params$data_part, params$control, params$model)
+```
+
+```{r, echo=F}
+fit.mod$fit
+```
+
+
+## Confusion Matrix
+
+```{r, echo=F}
+fit.mod$confMatrix
+```
+
+
+## Variable Importance
+
+```{r, echo=F}
+plot_imp <- varImp(fit.mod$fit, scale = T)
+plot(plot_imp, scales = list(y = list(cex = .95)), top = 5)
+```
+
