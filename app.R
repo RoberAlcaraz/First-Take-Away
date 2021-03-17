@@ -152,7 +152,14 @@ if (DOWNLOAD_DATA_SET){
   vehicles = vehicles[sample, ]
   # saveRDS(vehicles, "vehicles_data.RDS")
 } else {
-  vehicles <- readRDS("vehicles_data.RDS")
+  #vehicles <- readRDS("vehicles_data.RDS")
+  vehicles <- read_csv("vehicles_data.csv")
+  
+  vehicles[sapply(vehicles, is.character)] <- lapply(vehicles[sapply(vehicles, is.character)], 
+                                                     as.factor)
+  vehicles$state <- as.character(vehicles$state)
+    
+  # write.csv(vehicles, "vehicles_data.csv", row.names = F)
 }
 
 # SHINY APP

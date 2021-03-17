@@ -20,19 +20,15 @@ knitr::opts_chunk$set(warning = FALSE,
 ```
 
 ```{r}
-pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis, devtools, kaggler, caret, reticulate, mice)
+pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis, devtools, kaggler, caret, reticulate, mice, readr)
 ```
 
 ```{r, echo=F}
-# githubURL <- "https://github.com/RoberAlcaraz/First-Take-Away/blob/main/vehicles_data.RDS?raw=true"
-# download.file(githubURL,"vehicles_data.RDS", method="curl")
-#temp <- tempfile()
-#download.file(githubURL, temp)
-#vehicles <- readRDS("vehicles_data.RDS")
+vehicles <- readr::read_csv("https://raw.githubusercontent.com/RoberAlcaraz/First-Take-Away/main/vehicles_data.csv")
 
-vehicles <- readRDS(gzcon(url("https://github.com/RoberAlcaraz/First-Take-Away/blob/main/vehicles_data.RDS?raw=true")))
-#unlink(temp)
-#vehicles <- readRDS(url(githubURL, method="libcurl"))
+vehicles[sapply(vehicles, is.character)] <- lapply(vehicles[sapply(vehicles, is.character)], 
+                                                     as.factor)
+vehicles$state <- as.character(vehicles$state)
 
 model.fitting <- function(partition, control, model){
   
