@@ -2,7 +2,7 @@
 title: "**Machine learning models**"
 subtitle: "**REPORT**"
 author: "Roberto J. Alcaraz Molina"
-output: html_document
+output: pdf_document
 params:
   data_part: 0.75
   control: "cv"
@@ -18,6 +18,11 @@ knitr::opts_chunk$set(warning = FALSE,
                       cache=FALSE, error = F,
                       class.output = "bg-primary")
 ```
+
+<style>
+div.blue pre { background-color:lightblue; }
+div.blue pre.r { background-color:blue; }
+</style>
 
 ```{r}
 pacman::p_load(shiny, tidyverse, ggplot2, magrittr, gapminder, plotly, shinythemes, shinyjs, DT, leaflet, knitr,Stat2Data, dplyr, patchwork, ggpubr, htmlwidgets, shinythemes, GGally, ggforce, maps, network, viridis, devtools, kaggler, caret, reticulate, mice, readr)
@@ -73,22 +78,27 @@ Here, there are your results of the model:
 fit.mod <- model.fitting(params$data_part, params$control, params$model)
 ```
 
+<div class = "blue">
 ```{r, echo=F}
 fit.mod$fit
 ```
+</div>
 
 
 ## Confusion Matrix
 
+<div class = "blue">
 ```{r, echo=F}
 fit.mod$confMatrix
 ```
+</div>
 
 
 ## Variable Importance
 
+<div class = "blue">
 ```{r, echo=F}
 plot_imp <- varImp(fit.mod$fit, scale = T)
 plot(plot_imp, scales = list(y = list(cex = .95)), top = 5)
 ```
-
+</div>
