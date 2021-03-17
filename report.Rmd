@@ -6,7 +6,7 @@ output: html_document
 params:
   data_part: 0.75
   control: "cv"
-  model: "glm"
+  model: "knn"
 ---
 ```{r include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, 
@@ -43,7 +43,8 @@ model.fitting <- function(partition, control, model){
   form <- as.formula(price ~ year + odometer + manufacturer + condition + fuel + title_status + transmission + drive)
   fit.mod <- train(form, 
                    method = model,
-                   data = vehiclesTrain, metric = "Accuracy",
+                   data = as.data.frame(vehiclesTrain),
+                   metric = "Accuracy",
                    trControl = ctrl,
                    preProcess = c("BoxCox", "center", "scale"))
   
