@@ -1,1 +1,72 @@
-hello
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>d3.js data driven page</title>
+        <style>
+            body {background-color: white;}
+            .special {color:crimson}
+            .par1 {color: black;}
+            .par2 {color: black;}
+        </style>
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+        <script>
+            function putTxt(){
+                document.getElementById("output_txt1").value = document.getElementById("input_txt").value;
+                document.getElementById("output_txt2").value = document.getElementById("input_txt").value;
+                document.getElementById("output_txt3").value = document.getElementById("input_txt").value;
+            }
+
+            function colorR(){
+                d3.select("#id21").style("color", "red");
+                d3.select("#id22").style("color", "red");
+                d3.select("#id23").style("color", "red");
+            }
+
+            function colorB(){
+                d3.select("#id21").style("color", "blue");
+                d3.select("#id22").style("color", "blue");
+                d3.select("#id23").style("color", "blue");
+            }
+        </script>
+
+
+    </head>
+
+
+    <body>
+        <h1 class="special"> d3js dynamic HTML page</h1>
+        <hr color="black">
+        <p class="par1" id="id1">
+            In the following cell, you can type whatever you want.
+            Then, after clicking the button, you will get a paragraph
+            with a message. Finally, you can change the color to red 
+            or blue.
+        </p>
+        <input id="input_txt" type="text" placeholder="Insert some text"><br>
+        <br>
+        <button onclick="putTxt()">Click me</button><br>
+        <br>
+        <p class="par2" id="id21">
+            <output id="output_txt1" type="text"><br>
+        <br>
+        </p>
+        <p class="par2" id="id22">
+            <output id="output_txt2" type="text"><br>
+        <br>
+        </p>
+        <p class="par2" id="id23">
+            <output id="output_txt3" type="text"><br>
+        <br>
+        </p>
+        
+        <br>
+        <button onclick="colorR()" type="button">Red Color</button>
+        <button onclick="colorB()" type="button">Blue Color</button>
+
+        
+
+
+        
+
+    </body>
+</html>
