@@ -5,68 +5,33 @@
         <style>
             body {background-color: white;}
             .special {color:crimson}
-            .par1 {color: black;}
-            .par2 {color: black;}
         </style>
-        <script src="https://d3js.org/d3.v6.min.js"></script>
-        <script>
-            function putTxt(){
-                document.getElementById("output_txt1").value = document.getElementById("input_txt").value;
-                document.getElementById("output_txt2").value = document.getElementById("input_txt").value;
-                document.getElementById("output_txt3").value = document.getElementById("input_txt").value;
-            }
-
-            function colorR(){
-                d3.select("#id21").style("color", "red");
-                d3.select("#id22").style("color", "red");
-                d3.select("#id23").style("color", "red");
-            }
-
-            function colorB(){
-                d3.select("#id21").style("color", "blue");
-                d3.select("#id22").style("color", "blue");
-                d3.select("#id23").style("color", "blue");
-            }
-        </script>
-
-
     </head>
 
 
     <body>
-        <h1 class="special"> d3js dynamic HTML page</h1>
+        <h1 class="special">Shiny App: First Take Away</h1>
         <hr color="black">
         <p class="par1" id="id1">
-            In the following cell, you can type whatever you want.
-            Then, after clicking the button, you will get a paragraph
-            with a message. Finally, you can change the color to red 
-            or blue.
+            In this app, there is some analysis about the Craiglist data set, the world’s largest collection of used vehicles for sale. We will find the following pages:
         </p>
-        <input id="input_txt" type="text" placeholder="Insert some text"><br>
-        <br>
-        <button onclick="putTxt()">Click me</button><br>
-        <br>
-        <p class="par2" id="id21">
-            <output id="output_txt1" type="text"><br>
-        <br>
-        </p>
-        <p class="par2" id="id22">
-            <output id="output_txt2" type="text"><br>
-        <br>
-        </p>
-        <p class="par2" id="id23">
-            <output id="output_txt3" type="text"><br>
-        <br>
-        </p>
+        <ol>
+          <li><b>Craiglist's vehicles:</b> There are an introduction of the problem, how we are going to deal with it and also, we describe the variables we are going to use. </li><br>
+          <li><b>Data description:</b> There are a left panel where we can select any of the variables we have defined before and the data frame description, where we can show a different number of entries, search any value or sort the variables. </li><br>
+          
+          <li><b>Descriptive analysis:</b> In the following panel, we are able to plot two graphics, an histogram and a barplot, to see the relationship between our target variable and the rest of predictors. </li><br>
+          
+          <li><b>Distribution of the vehicles:</b> In this page, we can observe two interactive maps of the USA: on the left, there is the location of the vehicles, and on the right, the quantity of vehicles on sale. </li><br>
+          
+          <li><b>Statistical models:</b> In this last page, we can perform some statistical and machine learning models, selecting the partition of the data that goes in the training set, the method of resampling and the model, which can be generalized linear model (glm), k nearest neighbors (knn), random forest (rf) or neural network (nnet).</li><br>
+        </ol>
         
-        <br>
-        <button onclick="colorR()" type="button">Red Color</button>
-        <button onclick="colorB()" type="button">Blue Color</button>
-
-        
-
-
-        
+        <p>
+          Hope you enjoy it,
+        </p>
+        <p>
+          Roberto Jesús Alcaraz Molina.
+        </p>
 
     </body>
 </html>
